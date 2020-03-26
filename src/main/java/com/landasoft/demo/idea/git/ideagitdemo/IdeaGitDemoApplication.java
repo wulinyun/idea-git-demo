@@ -8,7 +8,7 @@ public class IdeaGitDemoApplication {
 
     public static void main(String[] args) {
         //测试新增代码冲突提交11111111111
-        //测试新增代码并提交
+        //测试新增代码并提交22222222222222
         SpringApplication.run(IdeaGitDemoApplication.class, args);
     }
 
