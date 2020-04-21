@@ -1,18 +1,21 @@
 package com.landasoft.demo.idea.git.ideagitdemo;
+import com.landasoft.demo.idea.git.ideagitdemo.util.RSAUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-
+import java.io.*;
+import java.nio.charset.Charset;
 @SpringBootTest
 class IdeaGitDemoApplicationTests {
 
@@ -21,60 +24,115 @@ class IdeaGitDemoApplicationTests {
     }
     @Test
     void testUploadImage() throws IOException {
-        RestTemplate restTemplate = new RestTemplate();
-        String strUrl = "https://api.mch.weixin.qq.com/v3/merchant/media/upload";
-        String filePath = "C:\\Users\\wulinyun\\Desktop\\img\\filea.jpg";
-        String strJson = "{ \"filename\": \"filea.jpg\", \"sha256\": \" 1bed931148f9a569c775f7c1fb1b511cee79aab5a42e8f83811e6a8303bd4c52\" }";
+        try {
 
-        StringBuilder sbBody1 = new StringBuilder();
-        sbBody1.append("--boundary");
-        sbBody1.append("Content-Disposition: form-data; name=\"meta\"\r\n");
-        sbBody1.append("Content-Type: application/json\r\n");
-        //此处必须有个空行
-        sbBody1.append("\r\n");
-        sbBody1.append(strJson + "\r\n");
-        sbBody1.append("--boundary");
-        sbBody1.append("Content-Disposition: form-data; name=\"file\"; filename=\"filea.jpg\"\r\n");
-        sbBody1.append("Content-Type: image/jpg\r\n");
-        //此处必须有个空行
-        sbBody1.append("\r\n");
-        //此处为图片二进制内容
-        StringBuilder sbBody2 = new StringBuilder();
-        sbBody2.append("\r\n");
-        sbBody2.append("--boundary--\r\n");
-        byte[] byteArray1 = sbBody1.toString().getBytes("UTF-8");
-        FileInputStream fileInputStream = new FileInputStream(filePath);
-        //获取文件大小字节
-        int length = fileInputStream.available();
-        //读取文件字节到一个数组中
-        int bytesRead = 0;
-        int bytesToRead = length;
-        byte[] byteArray2 = new byte[bytesToRead];
-        while (bytesRead < bytesToRead) {
-            int result = fileInputStream.read(byteArray2, bytesRead, bytesToRead - bytesRead);
-            if (result == -1)
-                break;
-            bytesRead += result;
+            //商户号
+            String mchid ="";
+            //证书序列号
+            String serial_no ="";
+            //商户私钥（拷贝apiclient_key.pem文件里-----BEGIN PRIVATE KEY-----和-----END PRIVATE KEY-----之间的内容）
+            String rsaPrivateKey ="";
+            //微信支付平台公钥
+            String rsaPublicKeyFile ="D:\\develop\\program\\idea\\sagesoft\\idea-git-demo\\src\\main\\resources\\cert\\apiclient_cert.pem";
+            //时间戳
+            String timestamp = Long.toString(System.currentTimeMillis()/1000);
+            //随机数
+            String nonce_str =Long.toString(System.currentTimeMillis());
+            String url ="https://api.mch.weixin.qq.com/v3/marketing/favor/media/image-upload";
+            //图片文件
+            String filePath ="C:\\Users\\wulinyun\\Desktop\\img\\filea.jpg";//文件路径
+            File file =new File(filePath);
+            String filename = file.getName();//文件名
+            String fileSha256 = DigestUtils.sha256Hex(new FileInputStream(file));//文件sha256
+
+            //拼签名串
+            StringBuffer sb =new StringBuffer();
+            sb.append("POST").append("\n");
+            sb.append("/v3/marketing/favor/media/image-upload").append("\n");
+            sb.append(timestamp).append("\n");
+            sb.append(nonce_str).append("\n");
+            sb.append("{\"filename\":\""+filename+"\",\"sha256\":\""+fileSha256+"\"}").append("\n");
+            System.out.println("签名原串:"+sb.toString());
+
+            //计算签名
+            String sign =new String(Base64.encodeBase64(RSAUtils.signRSA(sb.toString(),rsaPrivateKey)));
+            System.out.println("签名sign值:"+sign);
+
+            //拼装http头的Authorization内容
+            String authorization ="WECHATPAY2-SHA256-RSA2048 mchid=\""+mchid+"\",nonce_str=\""+nonce_str+"\",signature=\""+sign+"\",timestamp=\""+timestamp+"\",serial_no=\""+serial_no+"\"";
+            System.out.println("authorization值:"+authorization);
+
+            //接口URL
+            CloseableHttpClient httpclient = HttpClients.createDefault();
+            HttpPost httpPost =new HttpPost(url);
+
+            //设置头部
+            httpPost.addHeader("Accept","application/json");
+            httpPost.addHeader("Content-Type","multipart/form-data");
+            httpPost.addHeader("Authorization", authorization);
+
+            //创建MultipartEntityBuilder
+            MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create().setMode(HttpMultipartMode.RFC6532);
+            //设置boundary
+            multipartEntityBuilder.setBoundary("boundary");
+            multipartEntityBuilder.setCharset(Charset.forName("UTF-8"));
+            //设置meta内容
+            multipartEntityBuilder.addTextBody("meta","{\"filename\":\""+filename+"\",\"sha256\":\""+fileSha256+"\"}", ContentType.APPLICATION_JSON);
+            //设置图片内容
+            multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/jpg"), filename);
+            //放入内容
+            httpPost.setEntity(multipartEntityBuilder.build());
+            //获取返回内容
+            CloseableHttpResponse response = httpclient.execute(httpPost);
+            HttpEntity httpEntity = response.getEntity();
+            String rescontent =new String(InputStreamTOByte(httpEntity.getContent()));
+            System.out.println("返回内容:" + rescontent);
+            //获取返回的http header
+            Header headers[] = response.getAllHeaders();
+            int i =0;
+            while (i < headers.length) {
+                System.out.println(headers[i].getName() +":  " + headers[i].getValue());
+                i++;
+            }
+            //验证微信支付返回签名
+            String Wtimestamp = response.getHeaders("Wechatpay-Timestamp")[0].getValue();
+            String Wnonce = response.getHeaders("Wechatpay-Nonce")[0].getValue();
+            String Wsign = response.getHeaders("Wechatpay-Signature")[0].getValue();
+            //拼装待签名串
+            StringBuffer ss =new StringBuffer();
+            ss.append(Wtimestamp).append("\n");
+            ss.append(Wnonce).append("\n");
+            ss.append(rescontent).append("\n");
+            //验证签名
+            if(RSAUtils.verifyRSA(ss.toString(), Base64.decodeBase64(Wsign.getBytes()), rsaPublicKeyFile)) {
+                System.out.println("签名验证成功");
+            }else {
+                System.out.println("签名验证失败");
+            }
+            EntityUtils.consume(httpEntity);
+            response.close();
+        }catch (Exception e) {
+            System.out.println("发送POST请求异常！" + e);
+            e.printStackTrace();
         }
-        fileInputStream.close();
-        System.out.println((bytesRead == length));
-        byte[] byteArray3 = sbBody2.toString().getBytes("UTF-8");
 
-        MultiValueMap<String, Object> paramMap = new LinkedMultiValueMap<String, Object>();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type","multipart/form-data;boundary=boundary");
-        String auth = "WECHATPAY2-SHA256-RSA2048 mchid=\"1492097252\",serial_no=\"4881D87565831A1598B4A9B97B6788AFDDA769D5\",nonce_str=\"1587457182446\",timestamp=\"1587457182\",signature=\"GS/oP1OAAtGnXf3rhE95qun+BR8F+y/zBA4SfLD6tmy0htZYROVx9hGevG4/Lrh/kNfOFKEtBy4tKdUaP0EGQU5UDjJuOEyU8PCd28p2zsAilGAzdV/Ph1Ou5Y2irhX7boZuJ3A4wXBHcl8jRR+uuAcMkW/q5U0nq8qcsFLPruuOBL0KOH00N1g+ulk+UTc6QITGX5cx0AnZlC+t2J0p8+TlKlZTT4lCPs49XDdDxxVo+Xjui3eYVLmVXsu81OWzJRYNi0n7sla3hqK0x/DqVRTU5y7YE3fx20xihPoF0jMfiNhAatQakf6ZINGNkQqjjwaXsx4fpXI9M817m2ENWg==\"";
-        headers.set("Authorization",auth);
-        headers.set("user-agent","Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36");
-        byte[] bt3 = new byte[byteArray1.length+byteArray2.length+byteArray3.length];
-        //System.arraycopy(byteArray1, 0, bt3, 0, byteArray1.length);
-        //System.arraycopy(byteArray2, 0, bt3, byteArray1.length, byteArray2.length);
-        //System.arraycopy(byteArray3, 0, bt3, byteArray1.length+byteArray2.length, byteArray3.length);
-        HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<MultiValueMap<String, Object>>(paramMap,headers);
-        //HttpEntity<ByteArrayResource> httpEntity = new HttpEntity<>(newByteArrayResource(bt3), headers);
-        ResponseEntity<String> response = restTemplate.exchange(strUrl, HttpMethod.POST, httpEntity, String.class);
-        System.out.println(response.getBody());
+    }
+    public static byte[] InputStreamTOByte(InputStream in)throws IOException{
+
+        int BUFFER_SIZE =4096;
+        ByteArrayOutputStream outStream =new ByteArrayOutputStream();
+        byte[] data =new byte[BUFFER_SIZE];
+        int count = -1;
+
+        while((count = in.read(data,0,BUFFER_SIZE)) != -1)
+            outStream.write(data,0, count);
+
+        data =null;
+        byte[] outByte = outStream.toByteArray();
+        outStream.close();
+
+        return outByte;
     }
 
 }
