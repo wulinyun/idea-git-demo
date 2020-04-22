@@ -26,15 +26,17 @@ class IdeaGitDemoApplicationTests {
     @Test
     void testUploadImage() throws IOException {
         try {
+            //私钥文件路径
+            String rsaPrivateKeyFilePath = "D:\\develop\\program\\idea\\sagesoft\\idea-git-demo\\src\\main\\resources\\cert\\apiclient_key.pem";
 
+            //微信支付平台公钥 openssl x509 -in apiclient_cert.pem -pubkey -noout > apiclient_cert_pub.pem
+            String rsaPublicKeyFile ="D:\\develop\\program\\idea\\sagesoft\\idea-git-demo\\src\\main\\resources\\cert\\apiclient_cert.pem";
             //商户号
             String mchid ="";
             //证书序列号
             String serial_no ="";
             //商户私钥（拷贝apiclient_key.pem文件里-----BEGIN PRIVATE KEY-----和-----END PRIVATE KEY-----之间的内容）
-            String rsaPrivateKey ="";
-            //微信支付平台公钥
-            String rsaPublicKeyFile ="D:\\develop\\program\\idea\\sagesoft\\idea-git-demo\\src\\main\\resources\\cert\\apiclient_cert.pem";
+            String rsaPrivateKey =RSAUtils.getPrivateKeyString(rsaPrivateKeyFilePath);
             //时间戳
             String timestamp = Long.toString(System.currentTimeMillis()/1000);
             //随机数
@@ -46,7 +48,12 @@ class IdeaGitDemoApplicationTests {
             File file =new File(filePath);
             String filename = file.getName();//文件名
             String fileSha256 = DigestUtils.sha256Hex(new FileInputStream(file));//文件sha256
-
+            //获取图片文件的图片类型
+            String imageType = FileUtils.getFormatInFile(file);
+            //当图片类型为null时有异常或者文件类型不对
+            if(imageType == null){
+                imageType = "jpg";
+            }
             //拼签名串
             StringBuffer sb =new StringBuffer();
             sb.append("POST").append("\n");
@@ -81,7 +88,7 @@ class IdeaGitDemoApplicationTests {
             //设置meta内容
             multipartEntityBuilder.addTextBody("meta","{\"filename\":\""+filename+"\",\"sha256\":\""+fileSha256+"\"}", ContentType.APPLICATION_JSON);
             //设置图片内容
-            multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/png"), filename);
+            multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/"+imageType), filename);
             //放入内容
             httpPost.setEntity(multipartEntityBuilder.build());
             //获取返回内容
