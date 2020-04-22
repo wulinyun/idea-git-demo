@@ -1,4 +1,5 @@
 package com.landasoft.demo.idea.git.ideagitdemo;
+import com.landasoft.demo.idea.git.ideagitdemo.util.FileUtils;
 import com.landasoft.demo.idea.git.ideagitdemo.util.RSAUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -40,7 +41,8 @@ class IdeaGitDemoApplicationTests {
             String nonce_str =Long.toString(System.currentTimeMillis());
             String url ="https://api.mch.weixin.qq.com/v3/marketing/favor/media/image-upload";
             //图片文件
-            String filePath ="C:\\Users\\wulinyun\\Desktop\\img\\filea.jpg";//文件路径
+            //String filePath ="C:\\Users\\wulinyun\\Desktop\\img\\filea.jpg";//文件路径
+            String filePath ="C:\\Users\\wulinyun\\Desktop\\img\\bk\\3.png";//文件路径
             File file =new File(filePath);
             String filename = file.getName();//文件名
             String fileSha256 = DigestUtils.sha256Hex(new FileInputStream(file));//文件sha256
@@ -79,13 +81,13 @@ class IdeaGitDemoApplicationTests {
             //设置meta内容
             multipartEntityBuilder.addTextBody("meta","{\"filename\":\""+filename+"\",\"sha256\":\""+fileSha256+"\"}", ContentType.APPLICATION_JSON);
             //设置图片内容
-            multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/jpg"), filename);
+            multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/png"), filename);
             //放入内容
             httpPost.setEntity(multipartEntityBuilder.build());
             //获取返回内容
             CloseableHttpResponse response = httpclient.execute(httpPost);
             HttpEntity httpEntity = response.getEntity();
-            String rescontent =new String(InputStreamTOByte(httpEntity.getContent()));
+            String rescontent =new String(FileUtils.InputStreamTOByte(httpEntity.getContent()));
             System.out.println("返回内容:" + rescontent);
             //获取返回的http header
             Header headers[] = response.getAllHeaders();
@@ -118,21 +120,4 @@ class IdeaGitDemoApplicationTests {
 
 
     }
-    public static byte[] InputStreamTOByte(InputStream in)throws IOException{
-
-        int BUFFER_SIZE =4096;
-        ByteArrayOutputStream outStream =new ByteArrayOutputStream();
-        byte[] data =new byte[BUFFER_SIZE];
-        int count = -1;
-
-        while((count = in.read(data,0,BUFFER_SIZE)) != -1)
-            outStream.write(data,0, count);
-
-        data =null;
-        byte[] outByte = outStream.toByteArray();
-        outStream.close();
-
-        return outByte;
-    }
-
 }
