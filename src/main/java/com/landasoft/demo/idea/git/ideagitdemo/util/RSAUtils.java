@@ -72,7 +72,7 @@ public class RSAUtils {
         return signature.verify(sign);
     }
     /**
-     * 通过私钥文件获取私钥
+     * 通过私钥文件获取私钥对象
      * @param filename 私钥文件路径  (required)
      * @return 私钥对象
      */
@@ -93,4 +93,21 @@ public class RSAUtils {
             throw new RuntimeException("无效的密钥格式");
         }
     }
+
+    /**
+     * 通过私钥文件路径获取私钥字符串
+     * @param filename 私钥文件路径
+     * @return
+     * @throws IOException IO异常
+     */
+    public static String getPrivateKeyString(String filename) throws IOException {
+
+        String content = new String(Files.readAllBytes(Paths.get(filename)), "utf-8");
+        String privateKey = content.replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replaceAll("\\s+", "");
+        return privateKey;
+
+    }
+
 }
