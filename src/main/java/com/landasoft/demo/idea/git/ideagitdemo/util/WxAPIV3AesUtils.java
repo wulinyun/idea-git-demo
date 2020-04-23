@@ -4,10 +4,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -38,7 +35,6 @@ public class WxAPIV3AesUtils {
     }
 
     /**
-     *
      * @param associatedData 附加数据
      * @param nonce 随机串
      * @param ciphertext 数据密文
@@ -53,7 +49,12 @@ public class WxAPIV3AesUtils {
 
             SecretKeySpec key = new SecretKeySpec(aesKey, "AES");
             GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH_BIT, nonce);
-
+            /**
+             *报错java.security.InvalidKeyException: Illegal key size
+             *解决办法：下载policy文件并替换${java_home}/jre/lib/security 目录下的文件
+             *JDK7 http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html
+             *JDK8 http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
+             */
             cipher.init(Cipher.DECRYPT_MODE, key, spec);
             cipher.updateAAD(associatedData);
 
