@@ -23,6 +23,10 @@ public class WxAPIV3AesUtils {
     static final int TAG_LENGTH_BIT = 128;
     private final byte[] aesKey;
 
+    /**
+     *
+     * @param key 用商户平台上设置的APIv3密钥
+     */
     public WxAPIV3AesUtils(byte[] key) {
         if (key.length != KEY_LENGTH_BYTE) {
             throw new IllegalArgumentException("无效的ApiV3Key，长度必须为32个字节");
@@ -30,6 +34,15 @@ public class WxAPIV3AesUtils {
         this.aesKey = key;
     }
 
+    /**
+     *
+     * @param associatedData 附加数据
+     * @param nonce 随机串
+     * @param ciphertext 数据密文
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     */
     public String decryptToString(byte[] associatedData, byte[] nonce, String ciphertext)
             throws GeneralSecurityException, IOException {
         try {
