@@ -1,6 +1,8 @@
 package com.landasoft.demo.idea.git.ideagitdemo;
+import com.alibaba.fastjson.JSONObject;
 import com.landasoft.demo.idea.git.ideagitdemo.util.FileUtils;
 import com.landasoft.demo.idea.git.ideagitdemo.util.RSAUtils;
+import com.landasoft.demo.idea.git.ideagitdemo.util.WxAPIV3AesUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.Header;
@@ -17,12 +19,42 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.security.GeneralSecurityException;
+
 @SpringBootTest
 class IdeaGitDemoApplicationTests {
 
     @Test
     void contextLoads() {
     }
+
+    /**
+     * 测试领券通知数据解密测试
+     * @throws IOException
+     * @throws GeneralSecurityException
+     */
+    @Test
+    void testDecryptToString() throws IOException, GeneralSecurityException {
+        String body = "{\"id\":\"a0d3b5f3-fb41-59d4-8887-2fc6fa73a28f\",\"create_time\":\"2020-04-22T12:54:24+08:00\",\"resource_type\":\"encrypt-resource\",\"event_type\":\"COUPON.SEND\",\"summary\":\"商家券领券通知\",\"resource\":{\"original_type\":\"coupon\",\"algorithm\":\"AEAD_AES_256_GCM\",\"ciphertext\":\"NMQoeTBQhmLg1nzzqHJBsN/m40LbxQpPIfgwz1s0zQgLM5WyqPed0BNDFGQnIdR6yseIdYPfzpJD/aBoLfX4SfK5sElWnuwEaiVXBzOP0kCZohC7sK9urWyHI88Bnq1zW0Id9FJ9bKWoR4vwmjpgrTKtZvxOFMmxV1uxY3SggEkUDvR5EzsZPZbdJjFRTxj/vL2MoHnWvHh+nLcPQiFg9wsKJ+jufPJfnT9Y6ZWpvLa/MU5gaU2ItZYDpJnGnbmN1p7wKAfKXJ5rcSumwqalQgGcMP6Jlw0aQofzUw3NW3eUUmSk5Rlp7zXzJMzRz77UKE2cfaqCevM0gIeeqHkxqt949OnywJbfC+0TbuHk1fd+ffBSakZurgdh8qqmIO667L82RTXmGA0+2eHMdYYiBtslODQa1AyO0O5MV3hIxj2cwpHm2YXsVDxxGvu3KX4FAx3WUw==\",\"associated_data\":\"coupon\",\"nonce\":\"QC8M6Rj84iKL\"}}";
+        JSONObject jsonObject = JSONObject.parseObject(body);
+        String wx_api3_key="";
+        byte[] key = wx_api3_key.getBytes("UTF-8");
+        WxAPIV3AesUtils aesUtil = new WxAPIV3AesUtils(key);
+        //附加数据
+        String assc = jsonObject.getJSONObject("resource").getString("associated_data");
+        //nonce
+        String nonce = jsonObject.getJSONObject("resource").getString("nonce");
+        //数据密文
+        String ciphertext = jsonObject.getJSONObject("resource").getString("ciphertext");
+
+        String decryptToString = aesUtil.decryptToString(assc.getBytes("UTF-8"),nonce.getBytes("UTF-8"),ciphertext);
+        System.out.println(decryptToString);
+    }
+
+    /**
+     * 微信支付商家券上传图片测试
+     * @throws IOException
+     */
     @Test
     void testUploadImage() throws IOException {
         try {
