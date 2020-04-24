@@ -71,6 +71,24 @@ public class RSAUtils {
         signature.update(data.getBytes("UTF-8"));
         return signature.verify(sign);
     }
+
+    /**
+     * 待签名字符串，已经签名字节数组通过公钥进行验签
+     * @param data 待签名字符串
+     * @param sign 已经签名字节数组
+     * @param publicKey 公钥
+     * @return
+     * @throws Exception
+     */
+    public static boolean verifyRSA(String data, byte[] sign, PublicKey publicKey) throws Exception{
+        if(data == null || sign == null || publicKey == null){
+            return false;
+        }
+        Signature signature = Signature.getInstance("SHA256WithRSA");
+        signature.initVerify(publicKey);
+        signature.update(data.getBytes("UTF-8"));
+        return signature.verify(sign);
+    }
     /**
      * 通过私钥文件获取私钥对象
      * @param filename 私钥文件路径  (required)
