@@ -53,16 +53,16 @@ public class RSAUtils {
      * 待签名字符串，已经签名字节数组通过公钥进行验签
      * @param data 待签名字符串
      * @param sign  已经签名字节数组
-     * @param pubKey 公钥字符串
+     * @param filename 证书文件路径
      * @return
      * @throws Exception
      */
-    public static boolean verifyRSA(String data, byte[] sign, String pubKey) throws Exception{
-        if(data == null || sign == null || pubKey == null){
+    public static boolean verifyRSA(String data, byte[] sign, String filename) throws Exception{
+        if(data == null || sign == null || filename == null){
             return false;
         }
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        FileInputStream in = new FileInputStream(pubKey);
+        FileInputStream in = new FileInputStream(filename);
         Certificate c = cf.generateCertificate(in);
         in.close();
         PublicKey publicKey = c.getPublicKey();
@@ -70,6 +70,24 @@ public class RSAUtils {
         signature.initVerify(publicKey);
         signature.update(data.getBytes("UTF-8"));
         return signature.verify(sign);
+    }
+
+    /**
+     * 通过证书文件获取公钥对象
+     * @param filename 公钥文件路径
+     * @return
+     * @throws Exception
+     */
+    public static PublicKey getPublicKey(String filename) throws Exception{
+        if(filename == null){
+            return null;
+        }
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        FileInputStream in = new FileInputStream(filename);
+        Certificate c = cf.generateCertificate(in);
+        in.close();
+        PublicKey publicKey = c.getPublicKey();
+        return publicKey;
     }
 
     /**
