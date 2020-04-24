@@ -13,16 +13,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  * @Author wulinyun
@@ -123,9 +119,10 @@ public class WxAPIV3HttpUtils {
      * @param method 请求方法，暂时支持GET、POST
      * @param url 接口完整地址
      * @param body 请求体
+     * @param contentType 请求类型
      * @return 响应值
      */
-    public static WxAPIv3HttpContent getWxAPIv3HttpContent(String method, String url, String body) throws Exception {
+    public static WxAPIv3HttpContent getWxAPIv3HttpContent(String method, String url, String body,ContentType contentType) throws Exception {
         //拼装http头的Authorization内容
         String authorization = WxAPIV3HttpUtils.getAuthorization(method,url,body);
         System.out.println("authorization值:"+authorization);
@@ -134,23 +131,33 @@ public class WxAPIV3HttpUtils {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         //获取返回内容
         CloseableHttpResponse response = null;
-        if(RequestMethod.GET.equals(method)){
+        if(RequestMethod.GET.name().equals(method)){
             HttpGet httpGet =new HttpGet(url);
             //设置头部
             httpGet.addHeader("Accept","application/json");
             httpGet.addHeader("Authorization", authorization);
+            if(!StringUtils.isEmpty(contentType)){
+                httpGet.addHeader("Content-Type", contentType.getMimeType());
+            }
+
             if(!StringUtils.isEmpty(body)){
 
             }
             response = httpclient.execute(httpGet);
 
-        }else if(RequestMethod.POST.equals(method)){
+        }else if(RequestMethod.POST.name().equals(method)){
             HttpPost httpPost =new HttpPost(url);
             //设置头部
             httpPost.addHeader("Accept","application/json");
+
             httpPost.addHeader("Authorization", authorization);
             if(!StringUtils.isEmpty(body)){
                 httpPost.setEntity(new StringEntity(body));
+                if(!StringUtils.isEmpty(contentType)){
+                    httpPost.addHeader("Content-Type", contentType.getMimeType());
+                }else{
+                    httpPost.setHeader("Content-Type", "application/json;charset=UTF-8");
+                }
             }
             response = httpclient.execute(httpPost);
         }
@@ -167,7 +174,7 @@ public class WxAPIV3HttpUtils {
      * @return
      * @throws Exception
      */
-    public static WxAPIv3HttpContent getWxAPIv3HttpContent(String method, String url,String body,MultipartEntityBuilder multipartEntityBuilder) throws Exception {
+    public static WxAPIv3HttpContent getWxAPIv3HttpMultipartEntityContent(String method, String url,String body,MultipartEntityBuilder multipartEntityBuilder) throws Exception {
         if(multipartEntityBuilder == null){
             return null;
         }
