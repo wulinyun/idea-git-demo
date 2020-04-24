@@ -18,6 +18,13 @@ public class WxAPIv3HttpContent implements Serializable {
      * 应答验签结果
      */
     private Boolean verify;
+    public WxAPIv3HttpContent() {
+        this.data = data;
+    }
+    public WxAPIv3HttpContent(String data) {
+        this.data = data;
+        this.verify = false;
+    }
 
     public WxAPIv3HttpContent(String data, Boolean verify) {
         this.data = data;
