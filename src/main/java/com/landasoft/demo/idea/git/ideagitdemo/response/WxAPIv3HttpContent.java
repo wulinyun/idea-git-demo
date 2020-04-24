@@ -1,4 +1,4 @@
-package com.landasoft.demo.idea.git.ideagitdemo.bean;
+package com.landasoft.demo.idea.git.ideagitdemo.response;
 
 import java.io.Serializable;
 
