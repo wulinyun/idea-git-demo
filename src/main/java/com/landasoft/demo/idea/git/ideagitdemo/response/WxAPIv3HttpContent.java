@@ -19,6 +19,11 @@ public class WxAPIv3HttpContent implements Serializable {
      */
     private Boolean verify;
 
+    public WxAPIv3HttpContent(String data, Boolean verify) {
+        this.data = data;
+        this.verify = verify;
+    }
+
     public String getData() {
         return data;
     }
