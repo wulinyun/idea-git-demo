@@ -32,7 +32,7 @@ public class IDUtils {
      * @param num 个数
      * @return
      */
-    public static String getRandomNumString(int num){
+    public static String getRandomNumString(Integer num){
         //获得系统时间，作为生成随机数的种子
         long seed = System.currentTimeMillis();
         //调用种子生成随机数
@@ -51,7 +51,7 @@ public class IDUtils {
      * @param num 默认num为3 3位随机数
      * @return 默认返回20位
      */
-    public static String getGeneratID(String pattern,int num){
+    public static String getGeneratID(String pattern,Integer num){
         if(StringUtils.isEmpty(pattern)){
             pattern = "yyyyMMddHHmmssSSS";
         }
@@ -62,6 +62,18 @@ public class IDUtils {
         return idStr;
     }
 
+    /**
+     * 获取指定位数的唯一ID
+     * @param num 随机数
+     * @return 当num为0时默认返回17位时间格式yyyyMMddHHmmssSSS，当num为null时返回20位，就是默认值为3位随机数。
+     */
+    public static String getGeneratID(Integer num){
+        if(StringUtils.isEmpty(num)){
+            num = 3;
+        }
+        String idStr = getDate("yyyyMMddHHmmssSSS") + getRandomNumString(num);
+        return idStr;
+    }
     public static void main(String[] args) {
         String pattern = "yyyyMMddHHmmssSSS";
         String idStr = getGeneratID(pattern,3);
