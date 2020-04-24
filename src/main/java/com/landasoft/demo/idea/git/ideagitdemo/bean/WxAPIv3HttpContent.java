@@ -1,5 +1,7 @@
 package com.landasoft.demo.idea.git.ideagitdemo.bean;
 
+import java.io.Serializable;
+
 /**
  * @Author wulinyun
  * @Version 1.0
@@ -7,7 +9,7 @@ package com.landasoft.demo.idea.git.ideagitdemo.bean;
  * @Description WxAPIv3接口获取内容封装:对返回的json接口，以及验签结果进行返回
  * @Date 2020/4/24 12:17
  */
-public class WxAPIv3HttpContent {
+public class WxAPIv3HttpContent implements Serializable {
     /**
      * 接口返回数据
      */
