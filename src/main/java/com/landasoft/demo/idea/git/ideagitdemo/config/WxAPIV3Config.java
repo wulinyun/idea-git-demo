@@ -22,6 +22,10 @@ public class WxAPIV3Config {
      */
     public static String rsaPublicKeyFile ="D:\\develop\\program\\idea\\sagesoft\\idea-git-demo\\src\\main\\resources\\cert\\apiclient_cert_v3.pem";
     /**
+     * 公众账号ID
+     */
+    public static String appid = "wxfa8b1fef701daf4e";
+    /**
      * 商户号
      */
     public static String mchid ="";
