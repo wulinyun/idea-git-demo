@@ -74,7 +74,7 @@ public class RSAUtils {
 
     /**
      * 通过证书文件获取公钥对象
-     * @param filename 公钥文件路径
+     * @param filename 证书文件路径
      * @return
      * @throws Exception
      */
