@@ -20,7 +20,7 @@ public class WxAPIV3HttpUtils {
      * @return String Authorization
      * @throws Exception
      */
-    public String getAuthorization(String method, String url, String body) throws Exception {
+    public static String getAuthorization(String method, String url, String body) throws Exception {
         String nonceStr =Long.toString(System.currentTimeMillis());;
         long timestamp = System.currentTimeMillis() / 1000;
         String message = buildMessage(method, url, timestamp, nonceStr, body);
@@ -41,7 +41,7 @@ public class WxAPIV3HttpUtils {
      * @param body 请求体
      * @return String 待签名串
      */
-    public String buildMessage(String method, String url, long timestamp, String nonceStr, String body) {
+    public static String buildMessage(String method, String url, long timestamp, String nonceStr, String body) {
         //拼签名串
         // String message = method + "\n"
         //+ canonicalUrl + "\n"
