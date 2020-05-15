@@ -20,6 +20,8 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.nio.charset.Charset;
+
 /**
  * @Author wulinyun
  * @Version 1.0
@@ -40,7 +42,7 @@ public class WxAPIV3HttpUtils {
         String nonceStr =Long.toString(System.currentTimeMillis());;
         long timestamp = System.currentTimeMillis() / 1000;
         String message = buildMessage(method, url, timestamp, nonceStr, body);
-        String signature =new String(Base64.encodeBase64(RSAUtils.signRSA(message, WxAPIV3Config.rsaPrivateKey)));;
+        String signature =new String(Base64.encodeBase64(RSAUtils.signRSA(message, WxAPIV3Config.rsaPrivateKey)));
         return "WECHATPAY2-SHA256-RSA2048 mchid=\"" + WxAPIV3Config.mchid + "\","
                 + "nonce_str=\"" + nonceStr + "\","
                 + "timestamp=\"" + timestamp + "\","
@@ -85,7 +87,7 @@ public class WxAPIV3HttpUtils {
         HttpEntity httpEntity = response.getEntity();
         String resContent =EntityUtils.toString(httpEntity);
         System.out.println("返回内容:" + resContent);
-        WxAPIv3HttpContent wxAPIv3HttpContent = new WxAPIv3HttpContent(resContent);
+        WxAPIv3HttpContent  wxAPIv3HttpContent = new WxAPIv3HttpContent(resContent);
         //获取返回的http header
         Header headers[] = response.getAllHeaders();
         int i =0;
@@ -151,13 +153,13 @@ public class WxAPIV3HttpUtils {
             httpPost.addHeader("Accept","application/json");
 
             httpPost.addHeader("Authorization", authorization);
+            if(!StringUtils.isEmpty(contentType)){
+                httpPost.addHeader("Content-Type", contentType.getMimeType());
+            }else{
+                httpPost.setHeader("Content-Type", "application/json;charset=UTF-8");
+            }
             if(!StringUtils.isEmpty(body)){
-                httpPost.setEntity(new StringEntity(body));
-                if(!StringUtils.isEmpty(contentType)){
-                    httpPost.addHeader("Content-Type", contentType.getMimeType());
-                }else{
-                    httpPost.setHeader("Content-Type", "application/json;charset=UTF-8");
-                }
+                httpPost.setEntity(new StringEntity(body, Charset.forName("UTF-8")));
             }
             response = httpclient.execute(httpPost);
         }

@@ -3,6 +3,8 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
@@ -33,7 +35,7 @@ public class RSAUtils {
 
         //读取商户私钥,该方法传入商户私钥证书的内容即可
 
-        byte[] keyBytes = Base64.decodeBase64(priKey);
+        byte[] keyBytes = java.util.Base64.getDecoder().decode(priKey);
 
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
 
@@ -42,10 +44,28 @@ public class RSAUtils {
         PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
 
         sign.initSign(privateKey);
-
         sign.update(data.getBytes("UTF-8"));
 
         return sign.sign();
+
+    }
+    public static String  signRSAToSting(String data, String priKey) throws Exception {
+        //签名的类型
+        Signature sign = Signature.getInstance("SHA256withRSA");
+        //读取商户私钥,该方法传入商户私钥证书的内容即可
+        //byte[] keyBytes = Base64.decodeBase64(priKey);
+        byte[] keyBytes = java.util.Base64.getDecoder().decode(priKey);
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+        sign.initSign(privateKey);
+        sign.update(data.getBytes("utf-8"));
+
+        return java.util.Base64.getEncoder().encodeToString(sign.sign());
 
     }
 
@@ -145,5 +165,44 @@ public class RSAUtils {
         return privateKey;
 
     }
+    /**
+     * 将字符串中的中文进行编码
+     * @param s
+     * @return 返回字符串中汉字编码后的字符串
+     */
+    public static String cnToEncode(String s ){
+        char[] ch = s.toCharArray();
+        String result = "";
+        for(int i=0;i<ch.length;i++){
+            char temp = ch[i];
+            if(isChinese(temp)){
+                try {
+                    String encode = URLEncoder.encode(String.valueOf(temp), "utf-8");
+                    result = result + encode;
+                } catch (UnsupportedEncodingException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }else{
+                result = result+temp;
+            }
+        }
+        return result;
+    }
 
+    /**
+     * 判断字符是否为汉字
+     * @param c
+     * @return
+     */
+    private static boolean isChinese(char c) {
+        Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+        if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+                || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+                || ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION || ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS
+                || ub == Character.UnicodeBlock.GENERAL_PUNCTUATION) {
+            return true;
+        }
+        return false;
+    }
 }
