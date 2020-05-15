@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.landasoft.demo.idea.git.ideagitdemo.config.WxAPIV3Config;
 import com.landasoft.demo.idea.git.ideagitdemo.response.WxAPIv3HttpContent;
-import com.landasoft.demo.idea.git.ideagitdemo.util.FileUtils;
-import com.landasoft.demo.idea.git.ideagitdemo.util.IDUtils;
-import com.landasoft.demo.idea.git.ideagitdemo.util.WxAPIV3AesUtils;
-import com.landasoft.demo.idea.git.ideagitdemo.util.WxAPIV3HttpUtils;
+import com.landasoft.demo.idea.git.ideagitdemo.util.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -122,6 +119,8 @@ class IdeaGitDemoApplicationTests {
             multipartEntityBuilder.addTextBody("meta",body, ContentType.APPLICATION_JSON);
             //设置图片内容
             multipartEntityBuilder.addBinaryBody("file", file, ContentType.create("image/"+imageType), filename);
+            InputStream fileInputStream = null;
+            multipartEntityBuilder.addBinaryBody("file", fileInputStream, ContentType.create("image/"+imageType), filename);
             WxAPIv3HttpContent wxAPIv3HttpContent = WxAPIV3HttpUtils.getWxAPIv3HttpMultipartEntityContent("POST",url,body,multipartEntityBuilder);
             /**
              * {
@@ -136,6 +135,100 @@ class IdeaGitDemoApplicationTests {
         }
     }
 
+    /**
+     * 创建商家券API
+     * 详情文档地址：https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/marketing/busifavor/chapter3_1.shtml
+     *
+     */
+    @Test
+    void testCreateBusifavorStocks(){
+        String method = "POST";
+        String url ="https://api.mch.weixin.qq.com/v3/marketing/busifavor/stocks";
+        //Map<String,Object> bodyMap = new HashMap<String,Object>();
+        JSONObject bodyMap = new JSONObject();
+        bodyMap.put("stock_name","皇堡");
+        bodyMap.put("belong_merchant","1492097252");
+        bodyMap.put("comment","测试");
+        bodyMap.put("goods_name","线下核销");
+        bodyMap.put("stock_type","EXCHANGE");
+        //核销规则
+        JSONObject coupon_use_rule_Map = new JSONObject();
+        //Map<String,Object> coupon_use_rule_Map = new HashMap<String,Object>();
+
+        JSONObject coupon_available_time_Map = new JSONObject();
+        //Map<String,Object> coupon_available_time_Map = new HashMap<String,Object>();
+        coupon_available_time_Map.put("available_begin_time","2020-05-14T00:00:00.000+08:00");
+        coupon_available_time_Map.put("available_end_time","2020-05-31T00:00:00.000+08:00");
+        coupon_available_time_Map.put("available_day_after_receive",10);
+        coupon_use_rule_Map.put("coupon_available_time",coupon_available_time_Map);
+
+        JSONObject exchange_coupon_Map = new JSONObject();
+        //Map<String,Object> exchange_coupon_Map = new HashMap<String,Object>();
+        exchange_coupon_Map.put("exchange_price",88);
+        exchange_coupon_Map.put("transaction_minimum",888);
+        coupon_use_rule_Map.put("exchange_coupon",exchange_coupon_Map);
+
+        coupon_use_rule_Map.put("use_method","OFF_LINE");
+        bodyMap.put("coupon_use_rule",coupon_use_rule_Map);
+
+        //发送规则
+        JSONObject stock_send_rule_Map = new JSONObject();
+        //Map<String,Object> stock_send_rule_Map = new HashMap<String,Object>();
+        stock_send_rule_Map.put("max_amount",88888);
+        stock_send_rule_Map.put("max_coupons",8);
+        stock_send_rule_Map.put("max_coupons_per_user",8);
+        stock_send_rule_Map.put("max_amount_by_day",1000);
+        stock_send_rule_Map.put("max_coupons_by_day",100);
+        stock_send_rule_Map.put("natural_person_limit",false);
+        stock_send_rule_Map.put("prevent_api_abuse",false);
+        stock_send_rule_Map.put("transferable",false);
+        stock_send_rule_Map.put("shareable",false);
+        bodyMap.put("stock_send_rule",stock_send_rule_Map);
+
+        //商户请求单号
+        bodyMap.put("out_request_no","14920972522020051500003");
+        //自定义入口
+        JSONObject custom_entrance_Map = new JSONObject();
+        //Map<String,Object> custom_entrance_Map = new HashMap<String,Object>();
+        custom_entrance_Map.put("appid","wxfa8b1fef701daf4e");
+        bodyMap.put("custom_entrance",custom_entrance_Map);
+        //样式信息
+        JSONObject display_pattern_info_Map = new JSONObject();
+        //Map<String,Object> display_pattern_info_Map = new HashMap<String,Object>();
+        display_pattern_info_Map.put("description","测试当中");
+        display_pattern_info_Map.put("merchant_logo_url","https://wxpaylogo.qpic.cn/wxpaylogo/PiajxSqBRaEI1qUibGfkJ4N0P1wzAesC8ibPWj5YTUicEJNVaMVnRYQDsA/0");
+        display_pattern_info_Map.put("merchant_name","汉堡王");
+        display_pattern_info_Map.put("background_color","Color040");
+        display_pattern_info_Map.put("coupon_image_url","https://wxpaylogo.qpic.cn/wxpaylogo/PiajxSqBRaEI1qUibGfkJ4N0iao9u3BBeWd3Dib7Lv3JNJj6gnc2ztpo6A/0");
+        bodyMap.put("display_pattern_info",display_pattern_info_Map);
+        //券code模式
+        bodyMap.put("coupon_code_mode","MERCHANT_API");
+        //事件通知配置
+        JSONObject notify_config_Map = new JSONObject();
+        //Map<String,Object> notify_config_Map = new HashMap<String,Object>();
+        notify_config_Map.put("notify_appid","wxfa8b1fef701daf4e");
+        bodyMap.put("notify_config",notify_config_Map);
+        String body = JSON.toJSONString(bodyMap);
+        //String body = "{\"belong_merchant\":\"1492097252\",\"comment\":\"测试\",\"coupon_code_mode\":\"MERCHANT_API\",\"coupon_use_rule\":{\"coupon_available_time\":{\"available_begin_time\":\"2020-05-14T00:00:00.000+08:00\",\"available_day_after_receive\":10,\"available_end_time\":\"2020-05-31T00:00:00.000+08:00\"},\"exchange_coupon\":{\"exchange_price\":88,\"transaction_minimum\":888},\"use_method\":\"OFF_LINE\"},\"custom_entrance\":{\"appid\":\"wxfa8b1fef701daf4e\"},\"display_pattern_info\":{\"background_color\":\"Color040\",\"coupon_image_url\":\"https://wxpaylogo.qpic.cn/wxpaylogo/PiajxSqBRaEI1qUibGfkJ4N0iao9u3BBeWd3Dib7Lv3JNJj6gnc2ztpo6A/0\",\"description\":\"测试当中\",\"merchant_logo_url\":\"https://wxpaylogo.qpic.cn/wxpaylogo/PiajxSqBRaEI1qUibGfkJ4N0P1wzAesC8ibPWj5YTUicEJNVaMVnRYQDsA/0\",\"merchant_name\":\"汉堡王\"},\"goods_name\":\"线下核销\",\"notify_config\":{\"notify_appid\":\"wxfa8b1fef701daf4e\"},\"out_request_no\":\"14920972522020051500002\",\"stock_name\":\"皇堡\",\"stock_send_rule\":{\"max_amount\":88888,\"max_amount_by_day\":1000,\"max_coupons\":8,\"max_coupons_by_day\":100,\"max_coupons_per_user\":8,\"natural_person_limit\":false,\"prevent_api_abuse\":false,\"shareable\":false,\"transferable\":false},\"stock_type\":\"EXCHANGE\"}";
+        WxAPIv3HttpContent wxAPIv3HttpContent = null;
+        try {
+            wxAPIv3HttpContent = WxAPIV3HttpUtils.getWxAPIv3HttpContent(method,url, body,ContentType.APPLICATION_JSON);
+            /**
+             * {
+             *     "create_time": "2020-05-15T10:34:48+08:00",
+             *     "stock_id": "1282070000000017"
+             * }
+             */
+            String resContent =wxAPIv3HttpContent.getData();
+            System.out.println("返回内容:" + resContent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+    }
     /**
      * 查询商家券详情API
      * 地址为：https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/marketing/busifavor/chapter3_2.shtml
